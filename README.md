@@ -1,68 +1,128 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# React+Electron 从开发到发布
+## 准备工作
+安装`node`环境
+https://nodejs.org/zh-cn/
+安装过程不做赘述。
 
-## Available Scripts
+安装`react`脚手架`create-react-app`和[yarn](https://github.com/yarnpkg/yarn/)
+```
+npm install -g create-react-app yarn
+```
 
-In the project directory, you can run:
+创建`React`项目
+脚手架安装完成后，执行以下命令，创建一个名为`react-electron-demo`的应用
+```
+create-react-app react-electron-demo
+```
 
-### `npm start`
+## 引入`Electron`
+安装 `electron`
+```
+cd react-electron-demo
+yarn add electron --dev
+yarn add electron-is-dev
+```
+根目录新建入口文件`main.js`
+```
+const electron = require('electron');
+const app = electron.app;
+const BrowserWindow = electron.BrowserWindow;
 
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+const path = require('path');
+const url = require('url');
+const isDev = require('electron-is-dev');
 
-The page will reload if you make edits.<br>
-You will also see any lint errors in the console.
+let mainWindow;
 
-### `npm test`
+function createWindow() {
+  mainWindow = new BrowserWindow({width: 900, height: 680});
+  mainWindow.loadURL(isDev ? 'http://localhost:3000' : `file://${path.join(__dirname, './build/index.html')}`);
+  mainWindow.on('closed', () => mainWindow = null);
+}
 
-Launches the test runner in the interactive watch mode.<br>
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+app.on('ready', createWindow);
 
-### `npm run build`
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
 
-Builds the app for production to the `build` folder.<br>
-It correctly bundles React in production mode and optimizes the build for the best performance.
+app.on('activate', () => {
+  if (mainWindow === null) {
+    createWindow();
+  }
+});
+```
+将入口文件加入到package.json中
+```
+"main": "main.js",
+"homepage": ".",
+```
+添加 `npm scripts`
+```
+"electron": "electron .",
+```
+启动
+```
+yarn start
+// 新建一个终端
+yarn electron
+```
+启动后效果如图：
+![](http://dada-image-bed.oss-cn-shenzhen.aliyuncs.com/19-1-9/18305917.jpg)
 
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
+## 优化
+### 使用`concurrently`并行运行
+同时开两个终端有点繁琐，所以可以借助工具`concurrently`。
+安装`concurrently`
+```
+yarn add concurrently --dev
+```
+添加 `npm scripts`
+```
+"dev": "concurrently \"yarn start\" \"electron .\""
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### 优化启动顺序
+由于electron启动需要先等react启动完毕，所以可以使用工具`wait-on`。
+安装`wait-on`
+```
+yarn add wait-on --dev
+```
+修改`npm scripts`
+```
+"dev": "concurrently \"yarn start\" \"wait-on http://localhost:3000 && electron .\""
+```
 
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
-
-### Analyzing the Bundle Size
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
-
-### Making a Progressive Web App
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
-
-### Advanced Configuration
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `npm run build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+## 打包发布
+安装`electron-builder`
+```
+yarn add electron-builder --dev
+```
+在`package.json`中添加`build`字段
+```
+"build": {
+  "appId": "com.example.electron-cra",
+  "files": [
+    "build/**/*",
+    "node_modules/**/*",
+    "public/**/*",
+    "main.js"
+  ],
+  "directories":{
+    "buildResources": "assets"
+  }
+}
+```
+添加 `npm scripts`
+以windows平台为例，其他平台请参考`electron-builder`文档
+```
+"package": "yarn build && electron-builder -c.extraMetadata.main=main.js --win --x64"
+```
+打包
+```
+yarn package
+```
+打包后的文件会在`dist`目录中
+![](http://dada-image-bed.oss-cn-shenzhen.aliyuncs.com/19-1-9/95561492.jpg)
