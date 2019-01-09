@@ -1,4 +1,4 @@
-# React+Electron 从开发到发布
+# React+Electron 从搭建到发布
 ## 准备工作
 安装`node`环境
 https://nodejs.org/zh-cn/
