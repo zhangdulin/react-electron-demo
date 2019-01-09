@@ -84,6 +84,13 @@ yarn add concurrently --dev
 "dev": "concurrently \"yarn start\" \"electron .\""
 ```
 
+### 禁止启动时在浏览器中打开
+根目录新建文件`.env`，输入：
+```
+BROWSER=none
+```
+保存后重新启动即可
+
 ### 优化启动顺序
 由于electron启动需要先等react启动完毕，所以可以使用工具`wait-on`。
 安装`wait-on`
