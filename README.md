@@ -125,4 +125,10 @@ yarn add electron-builder --dev
 yarn package
 ```
 打包后的文件会在`dist`目录中
+
 ![](http://dada-image-bed.oss-cn-shenzhen.aliyuncs.com/19-1-9/95561492.jpg)
+
+此教程的源码已托管在github：
+https://github.com/AlanLang/react-electron-demo
+
+谢谢您的阅读，如发现本文有任何不妥，欢迎指正，不胜感激。
